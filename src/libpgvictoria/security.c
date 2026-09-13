@@ -35,8 +35,10 @@
 #include <utils.h>
 
 /* system */
+#ifdef HAVE_CRC32_SSE42
 #include <nmmintrin.h>
 #include <wmmintrin.h>
+#endif
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -2594,6 +2596,7 @@ error:
    return 1;
 }
 
+#if defined(HAVE_CRC32_SSE42)
 static int
 cpu_supports_sse42(void)
 {
@@ -2608,6 +2611,7 @@ cpu_supports_sse42(void)
    return 0;
 #endif
 }
+#endif
 
 #if HAVE_CRC32_SSE42
 #ifdef __x86_64__
@@ -2737,10 +2741,12 @@ pgvictoria_crc_init(void)
       return;
    }
 #endif
-
-   crc_impl = pgvictoria_crc32c_software;
-   return;
 #endif
+
+   /* The software implementation is the fallback on every architecture.
+      It used to sit inside the x86 guard, so on anything else crc_impl
+      was left NULL and the caller went straight on to call it. */
+   crc_impl = pgvictoria_crc32c_software;
 }
 
 int
