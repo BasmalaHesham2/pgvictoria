@@ -30,6 +30,7 @@
 #include <pgvictoria.h>
 #include <logging.h>
 #include <network.h>
+#include <utils.h>
 
 /* system */
 #include <errno.h>
@@ -252,7 +253,7 @@ pgvictoria_connect(char* hostname, int port, int* fd)
    config = (struct main_configuration*)shmem;
 
    memset(&sport, 0, sizeof(sport));
-   sprintf(&sport[0], "%d", port);
+   pgvictoria_snprintf(&sport[0], sizeof(sport), "%d", port);
 
    /* Connect to server */
    memset(&hints, 0, sizeof hints);
@@ -576,7 +577,7 @@ bind_host(char* hostname, int port, int** fds, int* length)
    }
 
    memset(sport, 0, 6);
-   sprintf(sport, "%d", port);
+   pgvictoria_snprintf(sport, 6, "%d", port);
 
    /* Find all SOCK_STREAM addresses */
    memset(&hints, 0, sizeof hints);
