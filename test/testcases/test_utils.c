@@ -33,6 +33,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 MCTF_TEST(test_utils_append_basic)
 {
@@ -175,5 +176,35 @@ MCTF_TEST(test_utils_append_double)
 
 cleanup:
    free(s);
+   MCTF_FINISH();
+}
+
+MCTF_TEST(test_utils_get_symlink)
+{
+   char target[1024];
+   char* link_target = NULL;
+
+   pgvictoria_delete_directory("test_get_symlink");
+   pgvictoria_mkdir("test_get_symlink");
+
+   MCTF_ASSERT_INT_EQ(symlink("target.txt", "test_get_symlink/short"), 0, cleanup, "could not create symlink");
+   link_target = pgvictoria_get_symlink("test_get_symlink/short");
+   MCTF_ASSERT_PTR_NONNULL(link_target, cleanup, "get_symlink returned null");
+   MCTF_ASSERT_STR_EQ(link_target, "target.txt", cleanup, "short symlink target mismatch");
+   free(link_target);
+   link_target = NULL;
+
+   /* The longest target a 1024-byte buffer can hold with its terminator */
+   memset(target, 'a', sizeof(target) - 1);
+   target[sizeof(target) - 1] = '\0';
+   MCTF_ASSERT_INT_EQ(symlink(target, "test_get_symlink/long"), 0, cleanup, "could not create symlink");
+   link_target = pgvictoria_get_symlink("test_get_symlink/long");
+   MCTF_ASSERT_PTR_NONNULL(link_target, cleanup, "get_symlink returned null");
+   MCTF_ASSERT_STR_EQ(link_target, target, cleanup, "long symlink target mismatch");
+
+cleanup:
+   free(link_target);
+   link_target = NULL;
+   pgvictoria_delete_directory("test_get_symlink");
    MCTF_FINISH();
 }
